@@ -4535,15 +4535,6 @@ towards MPC_ACC_HOR_MAX/MPC_ACC_UP_MAX with jerk limit</short_desc>
       <unit>m/s</unit>
       <decimal>1</decimal>
     </parameter>
-    <parameter default="1.0" name="MPC_MANTHR_MAX" type="FLOAT">
-      <short_desc>Maximum manual thrust</short_desc>
-      <long_desc>Limit max allowed thrust for Manual mode.</long_desc>
-      <min>0.0</min>
-      <max>1.0</max>
-      <unit>norm</unit>
-      <decimal>2</decimal>
-      <increment>0.01</increment>
-    </parameter>
     <parameter default="0.08" name="MPC_MANTHR_MIN" type="FLOAT">
       <short_desc>Minimum manual thrust</short_desc>
       <long_desc>Minimum vertical thrust. It's recommended to set it &gt; 0 to avoid free fall with zero thrust. With MC_AIRMODE set to 1, this can safely be set to 0.</long_desc>
