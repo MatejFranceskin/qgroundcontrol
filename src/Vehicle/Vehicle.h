@@ -20,6 +20,7 @@
 #include "MAVLinkProtocol.h"
 #include "UASMessageHandler.h"
 #include "SettingsFact.h"
+#include "TerrainRequest.h"
 
 class UAS;
 class UASInterface;
@@ -862,6 +863,8 @@ public:
     void startMavlinkLog();
     void stopMavlinkLog();
 
+    void _sendTerrainDataToVehicle(mavlink_terrain_data_t& terrainData);
+
     /// Requests the specified data stream from the vehicle
     ///     @param stream Stream which is being requested
     ///     @param rate Rate at which to send stream in Hz
@@ -1233,6 +1236,7 @@ private:
     void _handleAttitudeQuaternion(mavlink_message_t& message);
     void _handleAttitudeTarget(mavlink_message_t& message);
     void _handleDistanceSensor(mavlink_message_t& message);
+    void _handleTerrainRequest(mavlink_message_t& message);
     void _handleEstimatorStatus(mavlink_message_t& message);
     void _handleStatusText(mavlink_message_t& message);
     // ArduPilot dialect messages
@@ -1325,6 +1329,7 @@ private:
     bool            _receivingAttitudeQuaternion;
 
     QGCCameraManager* _cameras;
+    TerrainRequest* _terrainRequest;
 
     typedef struct {
         int         component;

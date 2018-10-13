@@ -39,6 +39,7 @@
 #include "QGCCameraManager.h"
 #include "VideoReceiver.h"
 #include "VideoManager.h"
+#include "TerrainQuery.h"
 #if defined(QGC_AIRMAP_ENABLED)
 #include "AirspaceVehicleManager.h"
 #endif
@@ -280,6 +281,9 @@ Vehicle::Vehicle(LinkInterface*             link,
     _cameras = _firmwarePlugin->createCameraManager(this);
     emit dynamicCamerasChanged();
 
+    // Create Terrain request instance
+    _terrainRequest = new TerrainRequest(this);
+
     connect(&_adsbTimer, &QTimer::timeout, this, &Vehicle::_adsbTimerTimeout);
     _adsbTimer.setSingleShot(false);
     _adsbTimer.start(1000);
@@ -334,6 +338,7 @@ Vehicle::Vehicle(MAV_AUTOPILOT              firmwareType,
     , _highLatencyLink(false)
     , _receivingAttitudeQuaternion(false)
     , _cameras(nullptr)
+    , _terrainRequest(nullptr)
     , _connectionLost(false)
     , _connectionLostEnabled(true)
     , _initialPlanRequestComplete(false)
@@ -514,11 +519,15 @@ Vehicle::~Vehicle()
 
 void Vehicle::prepareDelete()
 {
-    if(_cameras) {
+    if (_cameras) {
         delete _cameras;
         _cameras = nullptr;
         emit dynamicCamerasChanged();
         qApp->processEvents();
+    }
+    if (_terrainRequest) {
+        delete _terrainRequest;
+        _terrainRequest = nullptr;
     }
 }
 
@@ -753,6 +762,9 @@ void Vehicle::_mavlinkMessageReceived(LinkInterface* link, mavlink_message_t mes
     case MAVLINK_MSG_ID_DISTANCE_SENSOR:
         _handleDistanceSensor(message);
         break;
+    case MAVLINK_MSG_ID_TERRAIN_REQUEST:
+        _handleTerrainRequest(message);
+        break;
     case MAVLINK_MSG_ID_ESTIMATOR_STATUS:
         _handleEstimatorStatus(message);
         break;
@@ -961,6 +973,27 @@ void Vehicle::_handleDistanceSensor(mavlink_message_t& message)
             orientation2Fact.fact->setRawValue(distanceSensor.current_distance / 100.0); // cm to meters
         }
     }
+}
+
+void Vehicle::_handleTerrainRequest(mavlink_message_t& message)
+{
+    if (_terrainRequest) {
+        mavlink_terrain_request_t terrainRequestMsg;
+        mavlink_msg_terrain_request_decode(&message, &terrainRequestMsg);
+        _terrainRequest->process(terrainRequestMsg);
+    }
+}
+
+void Vehicle::_sendTerrainDataToVehicle(mavlink_terrain_data_t& terrainData)
+{
+    mavlink_message_t msg;
+    mavlink_msg_terrain_data_encode_chan(_mavlink->getSystemId(),
+                                         _mavlink->getComponentId(),
+                                         priorityLink()->mavlinkChannel(),
+                                         &msg,
+                                         &terrainData);
+
+    sendMessageOnLink(priorityLink(), msg);
 }
 
 void Vehicle::_handleAttitudeTarget(mavlink_message_t& message)
@@ -1198,6 +1231,7 @@ void Vehicle::_setCapabilities(uint64_t capabilityBits)
     qCDebug(VehicleLog) << QString("Vehicle %1 MISSION_COMMAND_INT").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_COMMAND_INT ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 GeoFence").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_FENCE ? supports : doesNotSupport);
     qCDebug(VehicleLog) << QString("Vehicle %1 RallyPoints").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_MISSION_RALLY ? supports : doesNotSupport);
+    qCDebug(VehicleLog) << QString("Vehicle %1 Terrain").arg(_capabilityBits & MAV_PROTOCOL_CAPABILITY_TERRAIN ? supports : doesNotSupport);
 }
 
 void Vehicle::_handleAutopilotVersion(LinkInterface *link, mavlink_message_t& message)
