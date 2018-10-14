@@ -13,6 +13,8 @@
 #include "QGCApplication.h"
 #include "TerrainQuery.h"
 
+QGC_LOGGING_CATEGORY(TerrainRequestLog, "TerrainRequestLog")
+
 void TerrainRequest::process(mavlink_terrain_request_t& terrainRequest)
 {
      QMutexLocker ml(&_responseListMutex);
@@ -44,14 +46,20 @@ void TerrainRequest::nextRequest()
         _current_terrain_query_valid = false;
         return;
     }
-    _current_terrain_query = _responseList.first();
-    _current_terrain_query_valid = true;
+    _current_terrain_query = _responseList.first();    
     _responseList.removeFirst();
+
+    _current_terrain_query_valid = true;
 
     TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
     connect(terrain, &TerrainAtCoordinateQuery::terrainDataReceived, this, &TerrainRequest::terrainHeightReceived);
     QList<QGeoCoordinate> rgCoord;
-    QGeoCoordinate coord(_current_terrain_query.lat, _current_terrain_query.lon);
+    QGeoCoordinate coord((double)_current_terrain_query.lat / 1e7, (double)_current_terrain_query.lon / 1e7);
+
+    qCDebug(TerrainRequestLog) << "terrain query: (" << coord.latitude() << "; " << coord.longitude()
+                               << ") grid bit:" << _current_terrain_query.gridbit
+                               << " grid spacing: " << _current_terrain_query.grid_spacing;
+
     int f = _current_terrain_query.gridbit % 8;
     int n = _current_terrain_query.gridbit / 8;
     for (int i = 0; i < 4; i++) {
@@ -71,6 +79,9 @@ void TerrainRequest::terrainHeightReceived(bool success, QList<double> heights)
     if (success && _current_terrain_query_valid) {
         for (int i = 0; i < heights.count() && i < 16; ++i)
             _current_terrain_query.data[i] = static_cast<int16_t>(round(heights[i]));
+
+        qCDebug(TerrainRequestLog) << "Terrain heights received: " << _current_terrain_query.gridbit;
+
         reinterpret_cast<Vehicle *>(parent())->_sendTerrainDataToVehicle(_current_terrain_query);
     }
     nextRequest();
