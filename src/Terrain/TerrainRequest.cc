@@ -54,7 +54,7 @@ void TerrainRequest::nextRequest()
     TerrainAtCoordinateQuery* terrain = new TerrainAtCoordinateQuery(this);
     connect(terrain, &TerrainAtCoordinateQuery::terrainDataReceived, this, &TerrainRequest::terrainHeightReceived);
     QList<QGeoCoordinate> rgCoord;
-    QGeoCoordinate coord((double)_current_terrain_query.lat / 1e7, (double)_current_terrain_query.lon / 1e7);
+    QGeoCoordinate coord(static_cast<double>(_current_terrain_query.lat) / 1e7, static_cast<double>(_current_terrain_query.lon) / 1e7);
 
     qCDebug(TerrainRequestLog) << "terrain query: (" << coord.latitude() << "; " << coord.longitude()
                                << ") grid bit:" << _current_terrain_query.gridbit
