@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- *   (c) 2009-2016 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
+ *   (c) 2009-2018 QGROUNDCONTROL PROJECT <http://www.qgroundcontrol.org>
  *
  * QGroundControl is licensed according to the terms in the file
  * COPYING.md in the root of the source code directory.
@@ -46,6 +46,7 @@ void TerrainRequest::nextRequest()
         _current_terrain_query_valid = false;
         return;
     }
+
     _current_terrain_query = _responseList.first();    
     _responseList.removeFirst();
 
@@ -62,6 +63,7 @@ void TerrainRequest::nextRequest()
 
     int f = _current_terrain_query.gridbit % 8;
     int n = _current_terrain_query.gridbit / 8;
+
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
             QGeoCoordinate c = coord.atDistanceAndAzimuth(_current_terrain_query.grid_spacing * (f * 4 + j), 90);
@@ -84,6 +86,7 @@ void TerrainRequest::terrainHeightReceived(bool success, QList<double> heights)
 
         reinterpret_cast<Vehicle *>(parent())->_sendTerrainDataToVehicle(_current_terrain_query);
     }
+
     nextRequest();
     sender()->deleteLater();
 }

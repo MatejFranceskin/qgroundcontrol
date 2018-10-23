@@ -406,7 +406,8 @@ HEADERS += \
     src/api/QGCSettings.h \
     src/api/QmlComponentInfo.h \
     src/comm/MavlinkMessagesTimer.h \
-    src/Terrain/TerrainRequest.h
+    src/Terrain/TerrainRequest.h \
+    src/qgcunittest/TerrainRequestTest.h
 
 SOURCES += \
     src/api/QGCCorePlugin.cc \
@@ -414,7 +415,8 @@ SOURCES += \
     src/api/QGCSettings.cc \
     src/api/QmlComponentInfo.cc \
     src/comm/MavlinkMessagesTimer.cc \
-    src/Terrain/TerrainRequest.cc
+    src/Terrain/TerrainRequest.cc \
+    src/qgcunittest/TerrainRequestTest.cc
 
 #
 # Unit Test specific configuration goes here (requires full debug build with all plugins)
